@@ -5,7 +5,7 @@
 **POO Stickman** is a **Real-Time Strategy (RTS) Tower Defense Battle Game** featuring stick figure armies fighting for territorial control.  It's a faithful recreation of the classic "Stick War:  Legacy" game, built entirely in Java using the libGDX framework.
 
 **Game Resolution**: 1280×720 @ 60 FPS  
-**Platform**: Desktop (Windows, Mac, Linux)  
+**Platform**: Desktop (Windows)  
 **Language**: 100% Java with Gradle build system
 
 ---
