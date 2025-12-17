@@ -1,0 +1,30 @@
+apply plugin: "java-library"
+apply plugin: "application"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+sourceSets.main.resources.srcDirs += [rootProject.file('assets').path]
+
+application {
+    mainClass = "com.stickwar.legacy.desktop.DesktopLauncher"
+}
+
+dependencies {
+    implementation project(":core")
+    api "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+}
+
+jar {
+    archiveBaseName = appName
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'com.stickwar.legacy.desktop.DesktopLauncher'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
