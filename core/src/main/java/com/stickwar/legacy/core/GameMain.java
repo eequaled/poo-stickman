@@ -2,6 +2,7 @@ package com.stickwar.legacy.core;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
+import com.stickwar.legacy.screens.MainMenuScreen;
 
 /**
  * Main game class extending LibGDX's Game class.
@@ -17,8 +18,8 @@ public class GameMain extends Game {
 
     @Override
     public void create() {
-        // Screen will be set by DesktopLauncher or test
-        // setScreen(new MainMenuScreen(this));
+        // Initial screen
+        setScreen(new MainMenuScreen(this));
     }
 
     public GameState getCurrentState() {

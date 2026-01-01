@@ -12,13 +12,14 @@ public class Tile {
     private TileType type;
     private Player owner;
     private boolean isAccessible;
+    private int defenseBonus;
 
     public Tile(int x, int y, TileType type) {
         this.x = x;
         this.y = y;
         this.type = type;
         this.owner = null;
-        this.isAccessible = (type == TileType.GRASS);
+        setType(type);
     }
 
     public int getX() {
@@ -35,7 +36,25 @@ public class Tile {
 
     public void setType(TileType type) {
         this.type = type;
-        this.isAccessible = (type == TileType.GRASS);
+        // Terrain rules (requirements: 70% grass, 20% mountain, 10% water; mountains give defense)
+        switch (type) {
+            case GRASS:
+                this.isAccessible = true;
+                this.defenseBonus = 0;
+                break;
+            case MOUNTAIN:
+                this.isAccessible = false;
+                this.defenseBonus = 2;
+                break;
+            case WATER:
+                this.isAccessible = false;
+                this.defenseBonus = 0;
+                break;
+            default:
+                this.isAccessible = true;
+                this.defenseBonus = 0;
+                break;
+        }
     }
 
     public Player getOwner() {
@@ -52,5 +71,9 @@ public class Tile {
 
     public void setAccessible(boolean accessible) {
         this.isAccessible = accessible;
+    }
+
+    public int getDefenseBonus() {
+        return defenseBonus;
     }
 }

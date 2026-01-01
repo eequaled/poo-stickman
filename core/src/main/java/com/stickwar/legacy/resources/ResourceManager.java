@@ -9,6 +9,8 @@ import java.util.Map;
  */
 public class ResourceManager {
     public static final String GOLD = "Gold";
+    public static final String GEMS = "Gems";
+    public static final String UPGRADE_POINTS = "UpgradePoints";
     public static final int DEFAULT_STARTING_GOLD = 200;
 
     private Map<String, Integer> resources;
@@ -20,6 +22,8 @@ public class ResourceManager {
     public ResourceManager(int startingGold) {
         resources = new HashMap<>();
         resources.put(GOLD, startingGold);
+        resources.put(GEMS, 0);
+        resources.put(UPGRADE_POINTS, 0);
     }
 
     /**
@@ -62,6 +66,34 @@ public class ResourceManager {
     }
 
     /**
+     * Gems are rewarded for victories.
+     */
+    public void addGems(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Amount must be non-negative");
+        }
+        resources.put(GEMS, resources.get(GEMS) + amount);
+    }
+
+    public int getGems() {
+        return resources.get(GEMS);
+    }
+
+    /**
+     * Upgrade points rewarded for victories.
+     */
+    public void addUpgradePoints(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Amount must be non-negative");
+        }
+        resources.put(UPGRADE_POINTS, resources.get(UPGRADE_POINTS) + amount);
+    }
+
+    public int getUpgradePoints() {
+        return resources.get(UPGRADE_POINTS);
+    }
+
+    /**
      * Checks if the player can afford a cost.
      *
      * @param cost The cost to check
@@ -76,6 +108,8 @@ public class ResourceManager {
      */
     public void reset() {
         resources.put(GOLD, DEFAULT_STARTING_GOLD);
+        resources.put(GEMS, 0);
+        resources.put(UPGRADE_POINTS, 0);
     }
 
     /**

@@ -10,6 +10,9 @@ import java.util.List;
  * Calculates frontline and updates tile ownership.
  */
 public class TerritoryManager {
+    // World units per tile (kept in sync with GameScreen rendering tile width)
+    public static final int WORLD_UNITS_PER_TILE = 20;
+
     private final GameMap map;
 
     public TerritoryManager(GameMap map) {
@@ -25,10 +28,11 @@ public class TerritoryManager {
      * @param units  List of all units to consider
      */
     public void updateFrontline(Player player, List<Unit> units) {
-        int maxX = 0;
+        int maxTileX = 0;
         for (Unit unit : units) {
             if (unit.getOwner() == player) {
-                maxX = Math.max(maxX, (int) unit.getX());
+                int tileX = (int) (unit.getX() / WORLD_UNITS_PER_TILE);
+                maxTileX = Math.max(maxTileX, tileX);
             }
         }
         
@@ -36,7 +40,7 @@ public class TerritoryManager {
         for (int x = 0; x < map.getWidth(); x++) {
             for (int y = 0; y < map.getHeight(); y++) {
                 Tile tile = map.getTile(x, y);
-                if (x <= maxX) {
+                if (x <= maxTileX) {
                     tile.setOwner(player);
                 }
             }
@@ -51,13 +55,14 @@ public class TerritoryManager {
      * @return The maximum x position of the player's units
      */
     public int calculateFrontline(Player player, List<Unit> units) {
-        int maxX = 0;
+        int maxTileX = 0;
         for (Unit unit : units) {
             if (unit.getOwner() == player) {
-                maxX = Math.max(maxX, (int) unit.getX());
+                int tileX = (int) (unit.getX() / WORLD_UNITS_PER_TILE);
+                maxTileX = Math.max(maxTileX, tileX);
             }
         }
-        return maxX;
+        return maxTileX;
     }
 
     public GameMap getMap() {

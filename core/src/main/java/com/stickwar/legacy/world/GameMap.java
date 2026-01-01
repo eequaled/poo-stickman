@@ -21,9 +21,20 @@ public class GameMap {
      * TerritoryManager must iterate 2D.
      */
     private void generateMap() {
+        java.util.Random random = new java.util.Random();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                tiles[x][y] = new Tile(x, y, TileType.GRASS);
+                // 70% grass, 20% mountain, 10% water
+                int roll = random.nextInt(100);
+                TileType type;
+                if (roll < 70) {
+                    type = TileType.GRASS;
+                } else if (roll < 90) {
+                    type = TileType.MOUNTAIN;
+                } else {
+                    type = TileType.WATER;
+                }
+                tiles[x][y] = new Tile(x, y, type);
             }
         }
     }

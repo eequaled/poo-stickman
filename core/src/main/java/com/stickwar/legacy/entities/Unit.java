@@ -65,6 +65,22 @@ public abstract class Unit extends Entity {
         }
     }
 
+    /**
+     * Returns true if the unit can currently perform an attack (cooldown ready).
+     */
+    public boolean isAttackReady() {
+        return currentCooldown <= 0f;
+    }
+
+    /**
+     * Resets the attack cooldown after an attack has been processed externally.
+     * Sets the state to ATTACKING for clarity.
+     */
+    public void resetAttackCooldown() {
+        this.currentCooldown = attackCooldown;
+        this.state = UnitState.ATTACKING;
+    }
+
     public void setUserControlled(boolean controlled) {
         this.isUserControlled = controlled;
     }

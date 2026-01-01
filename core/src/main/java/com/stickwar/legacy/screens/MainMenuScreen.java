@@ -3,12 +3,19 @@ package com.stickwar.legacy.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.stickwar.legacy.core.GameMain;
 
@@ -30,8 +37,8 @@ public class MainMenuScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
 
-        // Create a basic skin programmatically for now
-        skin = new Skin(Gdx.files.internal("uiskin.json"));
+        // Create a basic skin programmatically (no external assets required)
+        skin = createBasicSkin();
 
         Table table = new Table();
         table.setFillParent(true);
@@ -100,5 +107,42 @@ public class MainMenuScreen implements Screen {
     public void dispose() {
         stage.dispose();
         skin.dispose();
+    }
+
+    /**
+     * Builds a minimal Scene2D skin with a white drawable and default font.
+     */
+    private Skin createBasicSkin() {
+        Skin s = new Skin();
+
+        // White 1x1 texture
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.WHITE);
+        pixmap.fill();
+        Texture texture = new Texture(pixmap);
+        pixmap.dispose();
+        s.add("white", texture);
+
+        // Default font
+        BitmapFont font = new BitmapFont();
+        s.add("default-font", font);
+
+        // Label style
+        Label.LabelStyle labelStyle = new Label.LabelStyle();
+        labelStyle.font = font;
+        labelStyle.fontColor = Color.WHITE;
+        s.add("default", labelStyle);
+
+        // TextButton style
+        TextButton.TextButtonStyle tbs = new TextButton.TextButtonStyle();
+        tbs.up = new SpriteDrawable(new Sprite(texture));
+        tbs.down = new SpriteDrawable(new Sprite(texture));
+        tbs.over = new SpriteDrawable(new Sprite(texture));
+        ((SpriteDrawable) tbs.over).getSprite().setColor(0.8f, 0.8f, 0.8f, 1f);
+        tbs.font = font;
+        tbs.fontColor = Color.BLACK;
+        s.add("default", tbs);
+
+        return s;
     }
 }
