@@ -3,30 +3,26 @@ package com.stickwar.legacy.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.stickwar.legacy.core.GameMain;
 
 /**
- * Main menu screen with Scene2D buttons.
- * Shows: New Game, Options, Quit
+ * Main menu screen with simple programmatic UI.
+ * Provides navigation to game, options, and quit functionality.
  */
 public class MainMenuScreen implements Screen {
     private final GameMain game;
-    private Stage stage;
-    private Skin skin;
+    private SpriteBatch batch;
+    private BitmapFont font;
+    private ShapeRenderer shapeRenderer;
+    
+    // Button rectangles
+    private Rectangle newGameButton;
+    private Rectangle optionsButton;
+    private Rectangle quitButton;
 
     public MainMenuScreen(GameMain game) {
         this.game = game;
@@ -34,65 +30,69 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(stage);
-
-        // Create a basic skin programmatically (no external assets required)
-        skin = createBasicSkin();
-
-        Table table = new Table();
-        table.setFillParent(true);
-        stage.addActor(table);
-
-        // New Game button
-        TextButton newGameButton = new TextButton("New Game", skin);
-        newGameButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                game.startGame();
-                game.setScreen(new GameScreen(game));
-            }
-        });
-
-        // Options button
-        TextButton optionsButton = new TextButton("Options", skin);
-        optionsButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new OptionsScreen(game));
-            }
-        });
-
-        // Quit button
-        TextButton quitButton = new TextButton("Quit", skin);
-        quitButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                Gdx.app.exit();
-            }
-        });
-
-        // Layout
-        table.add(newGameButton).width(200).height(50).pad(10);
-        table.row();
-        table.add(optionsButton).width(200).height(50).pad(10);
-        table.row();
-        table.add(quitButton).width(200).height(50).pad(10);
+        batch = new SpriteBatch();
+        font = new BitmapFont();
+        shapeRenderer = new ShapeRenderer();
+        
+        // Create button rectangles
+        float buttonWidth = 200;
+        float buttonHeight = 50;
+        float centerX = 1280 / 2f - buttonWidth / 2f;
+        
+        newGameButton = new Rectangle(centerX, 400, buttonWidth, buttonHeight);
+        optionsButton = new Rectangle(centerX, 330, buttonWidth, buttonHeight);
+        quitButton = new Rectangle(centerX, 260, buttonWidth, buttonHeight);
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.2f, 0.2f, 0.3f, 1);
+        // Clear screen
+        Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        stage.act(delta);
-        stage.draw();
+        // Handle input
+        if (Gdx.input.justTouched()) {
+            float mouseX = Gdx.input.getX();
+            float mouseY = 720 - Gdx.input.getY(); // Flip Y coordinate
+            
+            if (newGameButton.contains(mouseX, mouseY)) {
+                game.startGame();
+                game.setScreen(new GameScreen(game));
+            } else if (optionsButton.contains(mouseX, mouseY)) {
+                game.setScreen(new OptionsScreen(game));
+            } else if (quitButton.contains(mouseX, mouseY)) {
+                Gdx.app.exit();
+            }
+        }
+
+        // Draw buttons
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        // New Game button
+        shapeRenderer.setColor(0.4f, 0.4f, 0.8f, 1);
+        shapeRenderer.rect(newGameButton.x, newGameButton.y, newGameButton.width, newGameButton.height);
+        
+        // Options button
+        shapeRenderer.setColor(0.6f, 0.6f, 0.6f, 1);
+        shapeRenderer.rect(optionsButton.x, optionsButton.y, optionsButton.width, optionsButton.height);
+        
+        // Quit button
+        shapeRenderer.setColor(0.8f, 0.4f, 0.4f, 1);
+        shapeRenderer.rect(quitButton.x, quitButton.y, quitButton.width, quitButton.height);
+        
+        shapeRenderer.end();
+
+        // Draw text
+        batch.begin();
+        font.draw(batch, "Stick War Legacy", 1280/2f - 80, 500);
+        font.draw(batch, "New Game", newGameButton.x + 70, newGameButton.y + 30);
+        font.draw(batch, "Options", optionsButton.x + 80, optionsButton.y + 30);
+        font.draw(batch, "Quit", quitButton.x + 90, quitButton.y + 30);
+        batch.end();
     }
 
     @Override
-    public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
-    }
+    public void resize(int width, int height) {}
 
     @Override
     public void pause() {}
@@ -105,44 +105,8 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void dispose() {
-        stage.dispose();
-        skin.dispose();
-    }
-
-    /**
-     * Builds a minimal Scene2D skin with a white drawable and default font.
-     */
-    private Skin createBasicSkin() {
-        Skin s = new Skin();
-
-        // White 1x1 texture
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.WHITE);
-        pixmap.fill();
-        Texture texture = new Texture(pixmap);
-        pixmap.dispose();
-        s.add("white", texture);
-
-        // Default font
-        BitmapFont font = new BitmapFont();
-        s.add("default-font", font);
-
-        // Label style
-        Label.LabelStyle labelStyle = new Label.LabelStyle();
-        labelStyle.font = font;
-        labelStyle.fontColor = Color.WHITE;
-        s.add("default", labelStyle);
-
-        // TextButton style
-        TextButton.TextButtonStyle tbs = new TextButton.TextButtonStyle();
-        tbs.up = new SpriteDrawable(new Sprite(texture));
-        tbs.down = new SpriteDrawable(new Sprite(texture));
-        tbs.over = new SpriteDrawable(new Sprite(texture));
-        ((SpriteDrawable) tbs.over).getSprite().setColor(0.8f, 0.8f, 0.8f, 1f);
-        tbs.font = font;
-        tbs.fontColor = Color.BLACK;
-        s.add("default", tbs);
-
-        return s;
+        batch.dispose();
+        font.dispose();
+        shapeRenderer.dispose();
     }
 }

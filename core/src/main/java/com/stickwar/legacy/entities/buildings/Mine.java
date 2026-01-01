@@ -6,35 +6,35 @@ import com.stickwar.legacy.resources.ResourceManager;
 
 /**
  * Mine building that produces Gold over time.
- * goldPerTick=10, tickInterval=2.0f seconds
+ * Provides passive income for the player's economy.
  */
 public class Mine extends Building {
-    public static final int DEFAULT_HP = 500;
-    public static final int GOLD_PER_TICK = 10;
-    public static final float TICK_INTERVAL = 2.0f;
-
-    private int goldPerTick;
-    private float tickTimer;
-    private float tickInterval;
-
-    public Mine(Player owner) {
-        this(0, 0, owner);
-    }
+    public static final int HP = 300;
+    
+    private int goldPerTick = 10;
+    private float tickTimer = 0;
+    private float tickInterval = 2.0f; // seconds
 
     public Mine(float x, float y, Player owner) {
-        super(x, y, DEFAULT_HP, owner);
-        this.goldPerTick = GOLD_PER_TICK;
-        this.tickInterval = TICK_INTERVAL;
-        this.tickTimer = 0;
+        super(x, y, HP, owner);
+        
+        // Mine construction cost
+        cost.put("Gold", 100);
     }
 
     /**
-     * Updates the mine, producing gold at regular intervals.
-     *
-     * @param deltaTime Time since last update in seconds
-     * @param resources The ResourceManager to add gold to
+     * Updates the mine and produces gold at regular intervals.
+     * 
+     * @param deltaTime Time since last update
+     * @param resources ResourceManager to add gold to
      */
     public void update(float deltaTime, ResourceManager resources) {
+        super.update(deltaTime);
+        
+        if (isDestroyed()) {
+            return; // Dead mines don't produce gold
+        }
+        
         tickTimer += deltaTime;
         if (tickTimer >= tickInterval) {
             resources.addGold(goldPerTick);
@@ -42,20 +42,35 @@ public class Mine extends Building {
         }
     }
 
-    @Override
-    public void update(float deltaTime) {
-        // Use update(deltaTime, resources) instead
-    }
-
+    /**
+     * Gets the gold production rate.
+     * @return Gold per tick
+     */
     public int getGoldPerTick() {
         return goldPerTick;
     }
 
+    /**
+     * Gets the production interval.
+     * @return Seconds between gold production
+     */
     public float getTickInterval() {
         return tickInterval;
     }
 
-    public float getTickTimer() {
-        return tickTimer;
+    /**
+     * Sets the gold production rate (for upgrades/balancing).
+     * @param goldPerTick New gold per tick amount
+     */
+    public void setGoldPerTick(int goldPerTick) {
+        this.goldPerTick = Math.max(0, goldPerTick);
+    }
+
+    /**
+     * Sets the production interval (for upgrades/balancing).
+     * @param tickInterval New interval in seconds
+     */
+    public void setTickInterval(float tickInterval) {
+        this.tickInterval = Math.max(0.1f, tickInterval);
     }
 }

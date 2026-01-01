@@ -58,20 +58,22 @@ class TerritoryManagerTest {
         
         // Generate random number of units (1-10)
         int numUnits = random.nextInt(10) + 1;
-        int expectedMaxX = 0;
+        int expectedMaxTileX = 0;
         
         for (int i = 0; i < numUnits; i++) {
-            int x = random.nextInt(map.getWidth());
-            TestUnit unit = new TestUnit(x, 0, player);
+            // Generate world coordinates (units are positioned in world space)
+            int worldX = random.nextInt(map.getWidth() * TerritoryManager.WORLD_UNITS_PER_TILE);
+            TestUnit unit = new TestUnit(worldX, 0, player);
             units.add(unit);
-            expectedMaxX = Math.max(expectedMaxX, x);
+            int tileX = worldX / TerritoryManager.WORLD_UNITS_PER_TILE;
+            expectedMaxTileX = Math.max(expectedMaxTileX, tileX);
         }
         
         // Add some enemy units (should not affect player frontline)
         int numEnemyUnits = random.nextInt(5);
         for (int i = 0; i < numEnemyUnits; i++) {
-            int x = random.nextInt(map.getWidth());
-            units.add(new TestUnit(x, 0, enemy));
+            int worldX = random.nextInt(map.getWidth() * TerritoryManager.WORLD_UNITS_PER_TILE);
+            units.add(new TestUnit(worldX, 0, enemy));
         }
         
         territoryManager.updateFrontline(player, units);
@@ -80,9 +82,9 @@ class TerritoryManagerTest {
         for (int x = 0; x < map.getWidth(); x++) {
             for (int y = 0; y < map.getHeight(); y++) {
                 Tile tile = map.getTile(x, y);
-                if (x <= expectedMaxX) {
+                if (x <= expectedMaxTileX) {
                     assertEquals(player, tile.getOwner(),
-                        "Tile at x=" + x + " should be owned by player (frontline at " + expectedMaxX + ")");
+                        "Tile at x=" + x + " should be owned by player (frontline at " + expectedMaxTileX + ")");
                 }
             }
         }
@@ -90,7 +92,7 @@ class TerritoryManagerTest {
 
     /**
      * **Feature: stick-war-legacy-clone, Property 8: Territory Frontline Calculation**
-     * Frontline calculation returns correct max X position.
+     * Frontline calculation returns correct max tile X position.
      * **Validates: Requirements 3.1, 3.2**
      */
     @RepeatedTest(100)
@@ -99,18 +101,20 @@ class TerritoryManagerTest {
         List<Unit> units = new ArrayList<>();
         
         int numUnits = random.nextInt(10) + 1;
-        int expectedMaxX = 0;
+        int expectedMaxTileX = 0;
         
         for (int i = 0; i < numUnits; i++) {
-            int x = random.nextInt(map.getWidth());
-            units.add(new TestUnit(x, 0, player));
-            expectedMaxX = Math.max(expectedMaxX, x);
+            // Generate world coordinates (units are positioned in world space)
+            int worldX = random.nextInt(map.getWidth() * TerritoryManager.WORLD_UNITS_PER_TILE);
+            units.add(new TestUnit(worldX, 0, player));
+            int tileX = worldX / TerritoryManager.WORLD_UNITS_PER_TILE;
+            expectedMaxTileX = Math.max(expectedMaxTileX, tileX);
         }
         
         int frontline = territoryManager.calculateFrontline(player, units);
         
-        assertEquals(expectedMaxX, frontline,
-            "Frontline should equal the maximum X position of player units");
+        assertEquals(expectedMaxTileX, frontline,
+            "Frontline should equal the maximum tile X position of player units");
     }
 
     @Test
@@ -125,8 +129,8 @@ class TerritoryManagerTest {
     @Test
     void enemyUnitsDoNotAffectPlayerFrontline() {
         List<Unit> units = new ArrayList<>();
-        units.add(new TestUnit(10, 0, player));
-        units.add(new TestUnit(50, 0, enemy));  // Enemy further ahead
+        units.add(new TestUnit(10 * TerritoryManager.WORLD_UNITS_PER_TILE, 0, player));
+        units.add(new TestUnit(50 * TerritoryManager.WORLD_UNITS_PER_TILE, 0, enemy));  // Enemy further ahead
         
         int frontline = territoryManager.calculateFrontline(player, units);
         

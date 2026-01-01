@@ -2,12 +2,11 @@ package com.stickwar.legacy.entities.units;
 
 import com.stickwar.legacy.core.Player;
 import com.stickwar.legacy.entities.Unit;
-import com.stickwar.legacy.entities.UnitState;
-import com.stickwar.legacy.resources.ResourceManager;
 
 /**
- * Miner unit that gathers gold from mines and deposits it at the statue.
+ * Economic unit that gathers gold from mines.
  * HP=50, Attack=5, Speed=80, Cost=150
+ * Can carry up to 50 gold and deposit it at base.
  */
 public class Miner extends Unit {
     public static final int HP = 50;
@@ -30,35 +29,38 @@ public class Miner extends Unit {
     }
 
     /**
-     * Collects gold from a mine up to carrying capacity.
-     *
-     * @param availableGold The amount of gold available at the mine
-     * @return The amount of gold actually collected
+     * Collects gold from a mine or deposit.
+     * @param amount Amount of gold to collect
+     * @return Amount actually collected (limited by capacity)
      */
-    public int collectGold(int availableGold) {
-        int spaceAvailable = goldCapacity - carriedGold;
-        int collected = Math.min(spaceAvailable, availableGold);
-        carriedGold += collected;
-        if (carriedGold > 0) {
-            state = UnitState.RETURNING;
-        }
-        return collected;
+    public int collectGold(int amount) {
+        int canCollect = Math.min(amount, goldCapacity - carriedGold);
+        carriedGold += canCollect;
+        return canCollect;
     }
 
     /**
-     * Deposits carried gold into the ResourceManager.
-     *
-     * @param resources The ResourceManager to deposit gold into
-     * @return The amount of gold deposited
+     * Deposits all carried gold.
+     * @return Amount of gold deposited
      */
-    public int depositGold(ResourceManager resources) {
+    public int depositGold() {
         int deposited = carriedGold;
-        if (deposited > 0) {
-            resources.addGold(deposited);
-            carriedGold = 0;
-            state = UnitState.MINING;
-        }
+        carriedGold = 0;
         return deposited;
+    }
+
+    /**
+     * Checks if the miner can carry more gold.
+     */
+    public boolean canCarryMore() {
+        return carriedGold < goldCapacity;
+    }
+
+    /**
+     * Checks if the miner is carrying any gold.
+     */
+    public boolean isCarryingGold() {
+        return carriedGold > 0;
     }
 
     public int getCarriedGold() {
@@ -69,17 +71,9 @@ public class Miner extends Unit {
         return goldCapacity;
     }
 
-    public boolean isCarryingGold() {
-        return carriedGold > 0;
-    }
-
-    public boolean isAtCapacity() {
-        return carriedGold >= goldCapacity;
-    }
-
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
-        // Mining/returning logic handled by game systems
+        // Mining logic handled by game systems
     }
 }

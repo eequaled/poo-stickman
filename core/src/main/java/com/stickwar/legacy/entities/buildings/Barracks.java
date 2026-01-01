@@ -3,81 +3,87 @@ package com.stickwar.legacy.entities.buildings;
 import com.stickwar.legacy.core.Player;
 import com.stickwar.legacy.entities.Building;
 import com.stickwar.legacy.entities.Unit;
-import com.stickwar.legacy.entities.units.*;
 import com.stickwar.legacy.resources.ResourceManager;
+import com.stickwar.legacy.systems.UnitFactory;
 
 /**
  * Barracks building that spawns units instantly when gold is available.
+ * Players can queue unit production by spending gold.
  */
 public class Barracks extends Building {
-    public static final int DEFAULT_HP = 500;
-
-    private ResourceManager resources;
-    private float spawnX;
-    private float spawnY;
-
-    public Barracks(Player owner, ResourceManager resources) {
-        this(0, 0, owner, resources);
-    }
+    public static final int HP = 500;
+    
+    private final UnitFactory factory;
+    private final ResourceManager resources;
+    private float spawnX, spawnY;
 
     public Barracks(float x, float y, Player owner, ResourceManager resources) {
-        super(x, y, DEFAULT_HP, owner);
+        super(x, y, HP, owner);
+        this.factory = new UnitFactory();
         this.resources = resources;
-        this.spawnX = x;
+        this.spawnX = x + 30; // Spawn units slightly offset from building
         this.spawnY = y;
+        
+        // Barracks construction cost
+        cost.put("Gold", 200);
     }
 
     /**
      * Spawns a unit instantly if resources are available.
-     *
-     * @param unitType Type of unit to spawn ("Miner", "Swordwrath", "Archidonis", "Spearton")
+     * 
+     * @param unitType Type of unit to spawn (MINER, SWORDWRATH, etc.)
      * @return The spawned unit, or null if insufficient gold
      */
     public Unit spawnUnit(String unitType) {
-        int cost = getUnitCost(unitType);
-        if (cost > 0 && resources.spendGold(cost)) {
-            Unit unit = createUnit(unitType);
-            if (unit != null) {
+        try {
+            int cost = factory.getUnitCost(unitType);
+            if (resources.spendGold(cost)) {
+                Unit unit = factory.createUnit(unitType, this.getOwner());
                 unit.setPosition(spawnX, spawnY);
+                return unit;
             }
-            return unit;
+        } catch (IllegalArgumentException e) {
+            // Unknown unit type - return null
         }
         return null;
     }
 
     /**
-     * Gets the cost of a unit type.
+     * Gets the cost of a unit type without creating it.
+     * 
+     * @param unitType Type of unit to check
+     * @return Gold cost, or 0 if unknown type
      */
     public int getUnitCost(String unitType) {
-        switch (unitType.toUpperCase()) {
-            case "MINER": return Miner.COST;
-            case "SWORDWRATH": return Swordwrath.COST;
-            case "ARCHIDONIS": return Archidonis.COST;
-            case "SPEARTON": return Spearton.COST;
-            default: return 0;
+        try {
+            return factory.getUnitCost(unitType);
+        } catch (IllegalArgumentException e) {
+            return 0;
         }
     }
 
     /**
-     * Creates a unit of the specified type.
+     * Sets the spawn position for new units.
+     * 
+     * @param x Spawn X coordinate
+     * @param y Spawn Y coordinate
      */
-    private Unit createUnit(String unitType) {
-        switch (unitType.toUpperCase()) {
-            case "MINER": return new Miner(getOwner());
-            case "SWORDWRATH": return new Swordwrath(getOwner());
-            case "ARCHIDONIS": return new Archidonis(getOwner());
-            case "SPEARTON": return new Spearton(getOwner());
-            default: return null;
-        }
-    }
-
     public void setSpawnPosition(float x, float y) {
         this.spawnX = x;
         this.spawnY = y;
     }
 
+    public float getSpawnX() {
+        return spawnX;
+    }
+
+    public float getSpawnY() {
+        return spawnY;
+    }
+
     @Override
     public void update(float deltaTime) {
-        // Barracks doesn't auto-produce - spawning is triggered by player
+        super.update(deltaTime);
+        // Barracks spawns units on demand - no automatic production
     }
 }

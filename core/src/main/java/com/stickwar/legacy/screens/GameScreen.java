@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.stickwar.legacy.core.GameMain;
-import com.stickwar.legacy.core.GameState;
 import com.stickwar.legacy.core.Player;
 import com.stickwar.legacy.entities.buildings.CommandCenter;
 import com.stickwar.legacy.entities.buildings.Barracks;
@@ -97,7 +96,7 @@ public class GameScreen implements Screen {
         enemyMine = new Mine(1200, 280, enemy);
         
         // Initialize HUD
-        hud = new GameHUD(playerResources, territoryManager);
+        hud = new GameHUD(playerResources);
 
         // Starting units/economy
         playerResources.reset();
@@ -217,8 +216,6 @@ public class GameScreen implements Screen {
 
             if (target != null) {
                 float dx = target.getX() - unit.getX();
-                float dy = target.getY() - unit.getY();
-                float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
                 if (combatSystem.isInRange(unit, target) && unit.isAttackReady()) {
                     combatSystem.processAttack(unit, target);

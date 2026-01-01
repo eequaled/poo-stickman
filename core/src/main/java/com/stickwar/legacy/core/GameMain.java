@@ -1,7 +1,6 @@
 package com.stickwar.legacy.core;
 
 import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Screen;
 import com.stickwar.legacy.screens.MainMenuScreen;
 
 /**
