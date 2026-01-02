@@ -13,9 +13,11 @@ import java.util.Map;
 /**
  * Factory class for creating unit instances.
  * Uses Factory pattern to create units by type string.
+ * Integrates with UpgradeManager to apply upgrade bonuses to newly created units.
  */
 public class UnitFactory {
     private final Map<String, Integer> unitCosts;
+    private UpgradeManager upgradeManager;
 
     public UnitFactory() {
         unitCosts = new HashMap<>();
@@ -26,11 +28,21 @@ public class UnitFactory {
     }
 
     /**
+     * Sets the UpgradeManager to apply upgrade bonuses to created units.
+     * 
+     * @param upgradeManager The UpgradeManager instance
+     */
+    public void setUpgradeManager(UpgradeManager upgradeManager) {
+        this.upgradeManager = upgradeManager;
+    }
+
+    /**
      * Creates a unit of the specified type.
+     * Applies upgrade bonuses if UpgradeManager is set.
      * 
      * @param type Unit type string (MINER, SWORDWRATH, ARCHIDONIS, SPEARTON)
      * @param owner The player who owns this unit
-     * @return New unit instance
+     * @return New unit instance with upgrades applied
      * @throws IllegalArgumentException if unit type is unknown
      */
     public Unit createUnit(String type, Player owner) {
@@ -38,18 +50,30 @@ public class UnitFactory {
             throw new IllegalArgumentException("Type and owner cannot be null");
         }
 
+        Unit unit;
         switch (type.toUpperCase()) {
             case "MINER":
-                return new Miner(owner);
+                unit = new Miner(owner);
+                break;
             case "SWORDWRATH":
-                return new Swordwrath(owner);
+                unit = new Swordwrath(owner);
+                break;
             case "ARCHIDONIS":
-                return new Archidonis(owner);
+                unit = new Archidonis(owner);
+                break;
             case "SPEARTON":
-                return new Spearton(owner);
+                unit = new Spearton(owner);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown unit type: " + type);
         }
+
+        // Apply upgrade bonuses if UpgradeManager is set
+        if (upgradeManager != null) {
+            upgradeManager.applyUnitUpgrades(unit, type);
+        }
+
+        return unit;
     }
 
     /**

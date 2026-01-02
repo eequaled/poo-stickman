@@ -94,6 +94,10 @@ public abstract class Entity {
         return maxHp;
     }
 
+    public void setMaxHp(int maxHp) {
+        this.maxHp = maxHp;
+    }
+
     public Player getOwner() {
         return owner;
     }

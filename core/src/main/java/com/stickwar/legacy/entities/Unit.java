@@ -103,13 +103,21 @@ public abstract class Unit extends Entity {
         return isUserControlled ? moveSpeed * UC_SPEED_MULTIPLIER : moveSpeed;
     }
 
-    // Getters
+    // Getters and setters
     public int getAttackPower() {
         return attackPower;
     }
 
+    public void setAttackPower(int attackPower) {
+        this.attackPower = attackPower;
+    }
+
     public float getMoveSpeed() {
         return moveSpeed;
+    }
+
+    public void setMoveSpeed(float moveSpeed) {
+        this.moveSpeed = moveSpeed;
     }
 
     public int getCost() {

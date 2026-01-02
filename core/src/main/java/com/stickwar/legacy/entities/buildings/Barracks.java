@@ -5,27 +5,66 @@ import com.stickwar.legacy.entities.Building;
 import com.stickwar.legacy.entities.Unit;
 import com.stickwar.legacy.resources.ResourceManager;
 import com.stickwar.legacy.systems.UnitFactory;
+import com.stickwar.legacy.systems.UpgradeManager;
 
 /**
  * Barracks building that spawns units instantly when gold is available.
  * Players can queue unit production by spending gold.
+ * Can be upgraded with Gems to increase HP (+100 per level).
  */
 public class Barracks extends Building {
-    public static final int HP = 500;
+    public static final int BASE_HP = 500;
     
     private final UnitFactory factory;
     private final ResourceManager resources;
     private float spawnX, spawnY;
 
     public Barracks(float x, float y, Player owner, ResourceManager resources) {
-        super(x, y, HP, owner);
+        this(x, y, owner, resources, null);
+    }
+
+    public Barracks(float x, float y, Player owner, ResourceManager resources, UpgradeManager upgradeManager) {
+        super(x, y, calculateTotalHp(upgradeManager), owner);
         this.factory = new UnitFactory();
         this.resources = resources;
         this.spawnX = x + 30; // Spawn units slightly offset from building
         this.spawnY = y;
         
+        // Set UpgradeManager in factory if provided
+        if (upgradeManager != null) {
+            factory.setUpgradeManager(upgradeManager);
+        }
+        
         // Barracks construction cost
         cost.put("Gold", 200);
+    }
+
+    /**
+     * Calculates total HP including upgrade bonuses.
+     */
+    private static int calculateTotalHp(UpgradeManager upgradeManager) {
+        int totalHp = BASE_HP;
+        if (upgradeManager != null) {
+            totalHp += upgradeManager.getBarracksBonusHp();
+        }
+        return totalHp;
+    }
+
+    /**
+     * Updates the Barracks HP based on current upgrade level.
+     * Should be called when upgrades are purchased.
+     */
+    public void applyUpgrades(UpgradeManager upgradeManager) {
+        if (upgradeManager != null) {
+            int newMaxHp = BASE_HP + upgradeManager.getBarracksBonusHp();
+            int hpDifference = newMaxHp - this.maxHp;
+            
+            this.maxHp = newMaxHp;
+            this.hp += hpDifference; // Increase current HP by the upgrade amount
+            
+            // Update factory's upgrade manager
+            factory.setUpgradeManager(upgradeManager);
+        }
     }
 
     /**

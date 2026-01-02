@@ -2,9 +2,7 @@ package com.stickwar.legacy.entities.buildings;
 
 import com.stickwar.legacy.core.Player;
 import com.stickwar.legacy.entities.Unit;
-import com.stickwar.legacy.entities.units.*;
 import com.stickwar.legacy.resources.ResourceManager;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
@@ -13,116 +11,162 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Property tests for Barracks unit spawning.
- * **Feature: stick-war-legacy-clone, Property 7: Barracks Unit Spawning**
+ * Property tests for Barracks unit spawning behavior.
  */
 class BarracksTest {
 
-    private Player player;
-    private ResourceManager resources;
-    private Barracks barracks;
-
-    @BeforeEach
-    void setUp() {
-        player = new Player(1, "Test", true);
-        resources = new ResourceManager(0);  // Start with 0 gold
-        barracks = new Barracks(100, 50, player, resources);
-    }
-
     /**
-     * **Feature: stick-war-legacy-clone, Property 7: Barracks Unit Spawning**
+     * **Feature: stick-war-legacy-clone, Property 8: Barracks Unit Spawning**
      * For any unit type with cost C, when Barracks.spawnUnit() is called with gold G >= C,
-     * the gold should be reduced by C and a unit should be created.
-     * **Validates: Requirements 21.1, 21.2**
+     * the gold should be reduced by exactly C and a non-null unit should be returned.
+     * When G < C, null should be returned and gold should remain unchanged.
+     * **Validates: Requirements 9.2, 9.3**
      */
     @RepeatedTest(100)
-    void spawnUnitWithSufficientGoldDeductsAndCreates() {
+    void barracksUnitSpawning() {
         Random random = new Random();
-        String[] unitTypes = {"Miner", "Swordwrath", "Archidonis", "Spearton"};
-        String unitType = unitTypes[random.nextInt(unitTypes.length)];
+        Player player = new Player(1, "Test", true);
+        ResourceManager resources = new ResourceManager();
         
-        int cost = barracks.getUnitCost(unitType);
-        int extraGold = random.nextInt(500);  // 0-499 extra gold
-        int startingGold = cost + extraGold;
-        
+        // Set random starting gold
+        int startingGold = random.nextInt(1000) + 100; // 100-1099
         resources.setGold(startingGold);
         
-        Unit unit = barracks.spawnUnit(unitType);
+        Barracks barracks = new Barracks(0, 0, player, resources);
         
-        assertNotNull(unit, "Unit should be created when gold >= cost");
-        assertEquals(startingGold - cost, resources.getGold(),
-            "Gold should be reduced by exactly the unit cost");
+        // Test with random unit type
+        String[] unitTypes = {"MINER", "SWORDWRATH", "ARCHIDONIS", "SPEARTON"};
+        String unitType = unitTypes[random.nextInt(unitTypes.length)];
+        
+        int unitCost = barracks.getUnitCost(unitType);
+        int goldBefore = resources.getGold();
+        boolean canAfford = goldBefore >= unitCost;
+        
+        Unit spawnedUnit = barracks.spawnUnit(unitType);
+        int goldAfter = resources.getGold();
+        
+        if (canAfford) {
+            assertNotNull(spawnedUnit, "Should spawn unit when gold is sufficient");
+            assertEquals(goldBefore - unitCost, goldAfter,
+                "Gold should be reduced by exactly the unit cost");
+            assertEquals(player, spawnedUnit.getOwner(),
+                "Spawned unit should belong to the correct player");
+            assertEquals(barracks.getSpawnX(), spawnedUnit.getX(),
+                "Unit should spawn at barracks spawn position X");
+            assertEquals(barracks.getSpawnY(), spawnedUnit.getY(),
+                "Unit should spawn at barracks spawn position Y");
+        } else {
+            assertNull(spawnedUnit, "Should not spawn unit when gold is insufficient");
+            assertEquals(goldBefore, goldAfter,
+                "Gold should remain unchanged when spawn fails");
+        }
     }
 
     /**
-     * **Feature: stick-war-legacy-clone, Property 7: Barracks Unit Spawning**
-     * When G < C, no unit should be created and gold should remain unchanged.
-     * **Validates: Requirements 21.1, 21.2**
+     * Test that Barracks handles unknown unit types gracefully.
      */
     @RepeatedTest(100)
-    void spawnUnitWithInsufficientGoldFailsAndPreservesGold() {
+    void barracksHandlesUnknownUnitTypes() {
         Random random = new Random();
-        String[] unitTypes = {"Miner", "Swordwrath", "Archidonis", "Spearton"};
-        String unitType = unitTypes[random.nextInt(unitTypes.length)];
+        Player player = new Player(1, "Test", true);
+        ResourceManager resources = new ResourceManager();
+        resources.setGold(1000); // Plenty of gold
         
-        int cost = barracks.getUnitCost(unitType);
-        int startingGold = random.nextInt(cost);  // 0 to cost-1
+        Barracks barracks = new Barracks(0, 0, player, resources);
         
-        resources.setGold(startingGold);
+        // Try to spawn unknown unit type
+        String unknownType = "UNKNOWN_UNIT_" + random.nextInt(1000);
+        int goldBefore = resources.getGold();
         
-        Unit unit = barracks.spawnUnit(unitType);
+        Unit spawnedUnit = barracks.spawnUnit(unknownType);
+        int goldAfter = resources.getGold();
         
-        assertNull(unit, "Unit should not be created when gold < cost");
-        assertEquals(startingGold, resources.getGold(),
-            "Gold should remain unchanged when spawn fails");
+        assertNull(spawnedUnit, "Should not spawn unit for unknown type");
+        assertEquals(goldBefore, goldAfter,
+            "Gold should remain unchanged for unknown unit type");
+        assertEquals(0, barracks.getUnitCost(unknownType),
+            "Unknown unit type should have cost 0");
+    }
+
+    /**
+     * Test multiple unit spawning in sequence.
+     */
+    @RepeatedTest(100)
+    void multipleUnitSpawning() {
+        Random random = new Random();
+        Player player = new Player(1, "Test", true);
+        ResourceManager resources = new ResourceManager();
+        resources.setGold(2000); // Plenty of gold
+        
+        Barracks barracks = new Barracks(0, 0, player, resources);
+        
+        String[] unitTypes = {"MINER", "SWORDWRATH"};
+        int totalCost = 0;
+        int unitsSpawned = 0;
+        
+        // Spawn 2-5 units
+        int spawnCount = random.nextInt(4) + 2;
+        for (int i = 0; i < spawnCount; i++) {
+            String unitType = unitTypes[random.nextInt(unitTypes.length)];
+            int unitCost = barracks.getUnitCost(unitType);
+            
+            if (resources.getGold() >= unitCost) {
+                Unit unit = barracks.spawnUnit(unitType);
+                assertNotNull(unit, "Should spawn unit when gold is available");
+                totalCost += unitCost;
+                unitsSpawned++;
+            }
+        }
+        
+        assertTrue(unitsSpawned > 0, "Should have spawned at least one unit");
+        assertEquals(2000 - totalCost, resources.getGold(),
+            "Total gold spent should match sum of unit costs");
     }
 
     @Test
-    void spawnMinerDeductsCorrectCost() {
-        resources.setGold(200);
-        Unit unit = barracks.spawnUnit("Miner");
+    void barracksInitializesWithCorrectValues() {
+        Player player = new Player(1, "Test", true);
+        ResourceManager resources = new ResourceManager();
+        Barracks barracks = new Barracks(10, 20, player, resources);
         
-        assertNotNull(unit);
-        assertTrue(unit instanceof Miner);
-        assertEquals(200 - Miner.COST, resources.getGold());
+        assertEquals(10, barracks.getX());
+        assertEquals(20, barracks.getY());
+        assertEquals(Barracks.BASE_HP, barracks.getHp());
+        assertEquals(Barracks.BASE_HP, barracks.getMaxHp());
+        assertEquals(player, barracks.getOwner());
+        assertFalse(barracks.isDestroyed());
+        
+        // Check spawn position is offset
+        assertEquals(40, barracks.getSpawnX()); // x + 30
+        assertEquals(20, barracks.getSpawnY()); // same y
     }
 
     @Test
-    void spawnSwordwrathDeductsCorrectCost() {
-        resources.setGold(300);
-        Unit unit = barracks.spawnUnit("Swordwrath");
-        
-        assertNotNull(unit);
-        assertTrue(unit instanceof Swordwrath);
-        assertEquals(300 - Swordwrath.COST, resources.getGold());
+    void barracksStatsMatchRequirements() {
+        assertEquals(500, Barracks.BASE_HP, "Barracks HP should be 500");
     }
 
     @Test
-    void spawnedUnitHasCorrectOwner() {
-        resources.setGold(500);
-        Unit unit = barracks.spawnUnit("Miner");
+    void barracksSpawnPositionCanBeChanged() {
+        Player player = new Player(1, "Test", true);
+        ResourceManager resources = new ResourceManager();
+        Barracks barracks = new Barracks(0, 0, player, resources);
         
-        assertNotNull(unit);
-        assertEquals(player, unit.getOwner());
+        barracks.setSpawnPosition(100, 200);
+        assertEquals(100, barracks.getSpawnX());
+        assertEquals(200, barracks.getSpawnY());
     }
 
     @Test
-    void spawnedUnitHasCorrectPosition() {
-        resources.setGold(500);
-        barracks.setSpawnPosition(100, 50);
-        Unit unit = barracks.spawnUnit("Miner");
+    void barracksIsDestroyedWhenHpZero() {
+        Player player = new Player(1, "Test", true);
+        ResourceManager resources = new ResourceManager();
+        Barracks barracks = new Barracks(0, 0, player, resources);
         
-        assertNotNull(unit);
-        assertEquals(100, unit.getX(), 0.001f);
-        assertEquals(50, unit.getY(), 0.001f);
-    }
-
-    @Test
-    void invalidUnitTypeReturnsNull() {
-        resources.setGold(1000);
-        Unit unit = barracks.spawnUnit("InvalidUnit");
+        assertFalse(barracks.isDestroyed(), "Barracks should not be destroyed initially");
         
-        assertNull(unit);
-        assertEquals(1000, resources.getGold(), "Gold should not be deducted for invalid unit type");
+        barracks.takeDamage(Barracks.BASE_HP);
+        assertTrue(barracks.isDestroyed(), "Barracks should be destroyed when HP = 0");
+        assertTrue(barracks.isMarkedForRemoval(), "Barracks should be marked for removal");
     }
 }
