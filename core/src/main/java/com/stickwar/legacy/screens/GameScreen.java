@@ -371,30 +371,43 @@ public class GameScreen implements Screen {
         if (controlledUnit == null) return;
         
         if (controlledUnit instanceof Spearton) {
-            // Spearton throws a spear that penetrates all enemies and hits statue for 20%
-            Projectile spear = new Projectile(
-                controlledUnit.getX() + 20, 
-                controlledUnit.getY() + 25,
-                400f, // velocity
-                50,   // damage to units
-                true, // is spear (penetrates)
-                player
-            );
-            projectiles.add(spear);
+            Spearton spearton = (Spearton) controlledUnit;
+            
+            // Check if spearton can throw spear
+            if (spearton.canThrowSpear()) {
+                // Throw the spear
+                if (spearton.throwSpear()) {
+                    Projectile spear = new Projectile(
+                        controlledUnit.getX() + 20, 
+                        controlledUnit.getY() + 25,
+                        400f, // velocity
+                        50,   // damage to units
+                        true, // is spear (penetrates)
+                        player
+                    );
+                    projectiles.add(spear);
+                }
+            }
+            // If no spear available, spearton now fights with dagger (normal melee attack)
         } else if (controlledUnit instanceof Archidonis) {
-            // Archidonis shoots arrow at nearest enemy or statue
-            Entity target = findNearestEnemy(controlledUnit, enemyUnits, enemyBase);
-            if (target != null) {
-                float direction = target.getX() > controlledUnit.getX() ? 1 : -1;
-                Projectile arrow = new Projectile(
-                    controlledUnit.getX() + 20 * direction,
-                    controlledUnit.getY() + 25,
-                    350f * direction,
-                    controlledUnit.getEffectiveAttackPower(), // 2x damage when controlled
-                    false, // not spear
-                    player
-                );
-                projectiles.add(arrow);
+            Archidonis archer = (Archidonis) controlledUnit;
+            
+            // Check if archer can shoot arrow
+            if (archer.canShootArrow()) {
+                // Archidonis shoots arrow at nearest enemy or statue
+                Entity target = findNearestEnemy(controlledUnit, enemyUnits, enemyBase);
+                if (target != null && archer.shootArrow()) {
+                    float direction = target.getX() > controlledUnit.getX() ? 1 : -1;
+                    Projectile arrow = new Projectile(
+                        controlledUnit.getX() + 20 * direction,
+                        controlledUnit.getY() + 25,
+                        350f * direction,
+                        controlledUnit.getEffectiveAttackPower(), // 2x damage when controlled
+                        false, // not spear
+                        player
+                    );
+                    projectiles.add(arrow);
+                }
             }
         }
     }
@@ -947,9 +960,22 @@ public class GameScreen implements Screen {
             String unitType = controlledUnit.getClass().getSimpleName();
             font.draw(batch, "Controlling: " + unitType + " (2x DMG) | Arrow keys to move", 350, 30);
             if (controlledUnit instanceof Spearton) {
-                font.draw(batch, "SPACE = Throw Spear (20% base damage, penetrates all)", 350, 50);
+                Spearton spearton = (Spearton) controlledUnit;
+                if (spearton.hasSpear()) {
+                    font.draw(batch, "SPACE = Throw Spear (20% base damage, penetrates all)", 350, 50);
+                } else {
+                    font.draw(batch, "Using Dagger (Spear thrown) - Melee combat only", 350, 50);
+                    if (spearton.getSpearThrowCooldown() > 0) {
+                        font.draw(batch, String.format("Spear cooldown: %.1fs", spearton.getSpearThrowCooldown()), 350, 70);
+                    }
+                }
             } else if (controlledUnit instanceof Archidonis) {
-                font.draw(batch, "SPACE = Shoot Arrow at nearest enemy", 350, 50);
+                Archidonis archer = (Archidonis) controlledUnit;
+                if (archer.canShootArrow()) {
+                    font.draw(batch, "SPACE = Shoot Arrow at nearest enemy", 350, 50);
+                } else {
+                    font.draw(batch, String.format("Arrow cooldown: %.1fs", archer.getArrowCooldown()), 350, 50);
+                }
             }
         }
         
